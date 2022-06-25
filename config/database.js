@@ -8,4 +8,4 @@ const db = new Sequelize(process.env.SEQUELIZE_DB, process.env.SEQUELIZE_USER, p
 });
 
 // export connection
-module.exports = db;
+module.exports = db; 

@@ -8,4 +8,4 @@ const loginLimiter = rateLimit({
     message: "Too many login attemps have been made from this IP. Try again in an hour."
 })
 
-module.exports = { loginLimiter }
+module.exports = { loginLimiter } 

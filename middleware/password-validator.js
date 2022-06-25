@@ -19,4 +19,4 @@ module.exports = (req, res, next) => {
             error: `Your password do not meet the following conditions: ${passwordSchema.validate(req.body.password, { list: true })}`
         })
     }
-}
+} 

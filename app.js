@@ -9,7 +9,7 @@ const userRoutes = require('./routes/user.js');
 const commentRoutes = require('./routes/comment.js')
 
 
-const app = express();
+const app = express(); 
 
 app.use(express.json());
 

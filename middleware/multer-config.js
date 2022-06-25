@@ -15,6 +15,6 @@ const MIME_TYPES = {
         const extension = MIME_TYPES[file.mimetype];
         callback(null, name + Date.now() + '.' + extension);
     }
-});
+}); 
 
 module.exports = multer({storage: storage}).single('image');

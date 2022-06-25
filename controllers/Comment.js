@@ -10,7 +10,7 @@ exports.getAllComments = (req, res, next) => {
 };
 
 /**
- * Leave a new comment
+ * Leave a new comment 
  */
 exports.createComment = (req, res, next) => {
     // create a comment

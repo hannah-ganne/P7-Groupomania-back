@@ -20,4 +20,4 @@ const Post = db.define('Post', {
     freezeTableName: true
 });
 
-module.exports = Post;
+module.exports = Post;  

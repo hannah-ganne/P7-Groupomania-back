@@ -28,7 +28,7 @@ exports.getPost = (req, res, next) => {
     })
     .catch(error => res.status(500).json({ message: "There's an " + error }));
 };
-
+ 
 /**
  * Upload a new post
  */

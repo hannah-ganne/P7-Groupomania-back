@@ -13,4 +13,4 @@ const Comment = db.define('Comment', {
     freezeTableName: true
 });
 
-module.exports = Comment;
+module.exports = Comment; 
