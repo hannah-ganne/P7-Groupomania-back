@@ -52,7 +52,7 @@ exports.createPost = (req, res, next) => {
         usersLiked: [],
         usersDisliked: [],
         // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        imageUrl: `https://static-cdn.jtvnw.net/jtv_user_pictures/fbfff8b8-d11a-4e08-a1af-00e8105ae7da-profile_image-300x300.png`
+        imageUrl: `sampleUrl`
     }
 
     Post.create(post)
@@ -182,6 +182,7 @@ exports.likePost = (req, res, next) => {
         switch (req.body.like) {
             case 1:
                 if (!usersLiked.includes(userId) && !usersDisliked.includes(userId)) {
+                    console.log(typeof(usersLiked))
                     Post.update({ usersLiked: [...usersLiked, userId]}, {
                         where: { id: id }
                     })

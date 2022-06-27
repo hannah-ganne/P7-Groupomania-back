@@ -5,7 +5,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const db = require('../config/database.js');
 
 // define schema
-const User = db.define('User', {
+const User = db.define('user', {
     // define attributes
     firstName: { type: DataTypes.STRING, allowNull: false },
     lastName: { type: DataTypes.STRING, allowNull: false }, 
@@ -15,4 +15,4 @@ const User = db.define('User', {
     freezeTableName: true
 });
 
-module.exports =  User; 
+module.exports = User; 
