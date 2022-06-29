@@ -51,8 +51,7 @@ exports.createPost = (req, res, next) => {
         dislikes: 0,
         usersLiked: [],
         usersDisliked: [],
-        // imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        imageUrl: `sampleUrl`
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     }
 
     Post.create(post)

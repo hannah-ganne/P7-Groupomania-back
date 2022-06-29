@@ -15,7 +15,6 @@ let Init = async () => {
     await Post.sync({alter: true});
     // await Comment.sync({alter: true})
 
-    // await Populate();
 }
 
 module.exports = Init;
