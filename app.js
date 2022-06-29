@@ -39,11 +39,13 @@ app.use((req, res, next) => {
 //     console.error('Unable to connect to the database:', error);
 //     }
 
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/api/posts', postRoutes);
-app.use('/api/auth', userRoutes);
-app.use('/api/comments', commentRoutes);
-
-Init();
+Init()
+    .then(() => {
+        app.use('/images', express.static(path.join(__dirname, 'images')));
+        app.use('/api/posts', postRoutes);
+        app.use('/api/auth', userRoutes);
+        app.use('/api/comments', commentRoutes);
+    })
+    .catch(err => console.log(err));
 
 module.exports = app;
