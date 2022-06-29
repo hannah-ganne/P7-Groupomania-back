@@ -5,7 +5,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 const db = require('../config/database.js');
 
 // define schema
-const Comment = db.define('Comment', {
+const Comment = db.define('comment', {
     // define attributes
     userId: { type: DataTypes.STRING, allowNull: false },
     comment: { type: DataTypes.TEXT, allowNull: false },
