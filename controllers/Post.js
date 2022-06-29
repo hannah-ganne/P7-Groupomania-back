@@ -1,4 +1,4 @@
-const Post = require('../models/Post.js');
+const Post = require('../models/post.js');
 const fs = require('fs');
 
 /**
@@ -42,19 +42,22 @@ exports.createPost = (req, res, next) => {
     }
 
     // create a post
-    const postObject = req.body;
-    delete postObject.id;
-    const post = {
-        ...postObject,
+    // const postObject = req.body;
+    // delete postObject.id;
+
+    Post.create({
+        // ...postObject,
         userId: req.token.userId,
+        title: req.body.title,
+        topic: req.body.topic,
+        description: req.body.description,
         likes: 0,
         dislikes: 0,
         usersLiked: [],
         usersDisliked: [],
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    }
-
-    Post.create(post)
+        // imageUrl: `sample url`
+    })
     .then(data => res.send(data))
     .catch(error => res.status(400).send({ message: "There's an " + error }));
     };

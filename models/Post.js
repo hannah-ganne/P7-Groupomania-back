@@ -15,11 +15,6 @@ const Post = db.define('post', {
     dislikes: { type: DataTypes.INTEGER, allowNull: false },
     usersLiked: { type: DataTypes.JSON, allowNull: false },
     usersDisliked: { type: DataTypes.JSON, allowNull: false },
-    userId: { type: DataTypes.INTEGER, allowNull: true, 
-        references: {
-            model: 'user',
-            key: 'id'
-        }}
 }, {
     freezeTableName: true
 });
