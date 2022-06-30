@@ -108,28 +108,19 @@ exports.setProfile = (req, res, next) => {
 /**
  * Profile viewing
  */
-// exports.viewProfile = (req, res, next) => {
+exports.viewProfile = (req, res, next) => {
 
-//     Post.findByPk(req.params.id)
-//         .then(post => {
-//             User.findByPk(post.userId)
-//                 .then(user => {
-//                     if (user) {
-//                         userProfile = {
-//                             name: `${user.firstName} ${user.lastName}`,
-//                             department: user.department,
-//                             expertIn: user.expertIn,
-//                             interestedIn: user.interestedIn,
-//                             oneWord: user.oneWord,
-//                             isUpFor: user.isUpFor
-//                         }
-//                         res.send(userProfile)
-//                     } else {
-//                         res.status(404).send({
-//                             message: `cannot find User with id ${user.id}`
-//                         });
-//                     }
-//             })
-//         })
-//         .catch(error => res.status(500).json({ message: "There's an " + error }));
-// };
+    Post.findOne({ where: { id: req.params.id }, include: User })
+        .then(post => {
+            const userProfile = {
+                name: `${post.user.firstName} ${post.user.lastName}`,
+                department: post.user.department,
+                expertIn: post.user.expertIn,
+                interestedIn: post.user.interestedIn,
+                oneWord: post.user.oneWord,
+                isUpFor: post.user.isUpFor
+            }
+            res.send(userProfile)
+        })
+        .catch(error => res.status(500).json({ message: "There's an " + error }));
+};
