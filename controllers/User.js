@@ -1,8 +1,9 @@
 const bcrypt = require('bcrypt');
-const User = require('../models/User');
+const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const AES = require('../utils/AES');
-
+const fs = require('fs');
+const Post = require('../models/post');
 
 /**
  * user sign up
@@ -55,3 +56,80 @@ exports.login = (req, res, next) => {
         })
         .catch(error => res.status(500).json({ message: "there's an" + error }));
 };
+
+/**
+ * Profile setting
+ */
+
+exports.setProfile = (req, res, next) => {
+    
+    User.findOne({
+        where:
+            { id: req.token.userId }
+    })
+        .then(user => {
+            if (!user) {
+                return res.status(401).json({ error: 'User not found' });
+            }
+            
+            // Modification
+            let userObject;
+            if(req.file) {
+                const filename = user.imageUrl.split('/images/')[1];
+                if (user.imageUrl) {
+                    fs.unlinkSync(`images/${filename}`);
+                }
+                userObject = {
+                    ...req.body.user,
+                    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+                    department: req.body.department,
+                    expertIn: req.body.expertIn,
+                    interestedIn: req.body.interestedIn,
+                    oneWord: req.body.oneWord,
+                    isUpFor: req.body.isUpFor
+                }
+            } else {
+                userObject = {
+                    ...req.body.user,
+                    department: req.body.department,
+                    expertIn: req.body.expertIn,
+                    interestedIn: req.body.interestedIn,
+                    oneWord: req.body.oneWord,
+                    isUpFor: req.body.isUpFor
+                }
+            }
+
+            User.update( userObject, { where: { id: req.token.userId }})
+            .then(user => res.status(200).json({ message: 'Profile updated'}))
+            .catch(error => res.status(400).json({ message: "There's an " + error }));
+        })
+}
+
+/**
+ * Profile viewing
+ */
+// exports.viewProfile = (req, res, next) => {
+
+//     Post.findByPk(req.params.id)
+//         .then(post => {
+//             User.findByPk(post.userId)
+//                 .then(user => {
+//                     if (user) {
+//                         userProfile = {
+//                             name: `${user.firstName} ${user.lastName}`,
+//                             department: user.department,
+//                             expertIn: user.expertIn,
+//                             interestedIn: user.interestedIn,
+//                             oneWord: user.oneWord,
+//                             isUpFor: user.isUpFor
+//                         }
+//                         res.send(userProfile)
+//                     } else {
+//                         res.status(404).send({
+//                             message: `cannot find User with id ${user.id}`
+//                         });
+//                     }
+//             })
+//         })
+//         .catch(error => res.status(500).json({ message: "There's an " + error }));
+// };
