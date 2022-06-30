@@ -4,7 +4,6 @@ const Post = require('./post');
 const Comment = require('./comment')
 
 let Init = async () => {
-    // Post.hasMany(Comment);
     Post.belongsTo(User, { onDelete: "CASCADE" });
     Comment.belongsTo(User);
     Comment.belongsTo(Post);
