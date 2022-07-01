@@ -1,5 +1,8 @@
 const Post = require('../models/post.js');
+const Like = require('../models/likes');
 const fs = require('fs');
+const { send } = require('process');
+const e = require('express');
 
 /**
  * Load all the posts
@@ -44,10 +47,6 @@ exports.createPost = (req, res, next) => {
     Post.create({
         ...req.body,
         userId: req.token.userId,
-        likes: 0,
-        dislikes: 0,
-        usersLiked: [],
-        usersDisliked: [],
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     })
     .then(data => res.send(data))
@@ -125,83 +124,42 @@ exports.deletePost = (req, res, next) => {
 };
 
 /**
- * Like/dislike, or undo like/dislike a post
+ * like/dislike/cancel like/dislike post
  */
-// exports.likePost = (req, res, next) => {
-//     const id = req.params.id;
-
-//     Post.findByPk(id)
-//     .then(post => {
-//         const usersLiked = post.usersLiked;
-//         const usersDisliked = post.usersDisliked;
-//         const userId = req.token.userId;
-
-//         switch (req.body.like) {
-//             case 1:
-//                 if (!usersLiked.includes(userId) && !usersDisliked.includes(userId)) {
-//                     usersLiked.push(userId);
-//                 }
-//                 break;
-//             case -1:
-//                 if (!usersDisliked.includes(userId) && !usersLiked.includes(userId)) {
-//                     usersDisliked.push(userId);
-//                 }
-//                 break;
-//             case 0:
-//                 if (usersLiked.includes(userId)) {
-//                     usersLiked.remove(userId)}
-//                     else if (usersDisliked.includes(userId)){
-//                         usersDisliked.remove(userId)
-//                     }
-//                 break;
-//         }
-//         post.likes = post.usersLiked.length;
-//         post.dislikes = post.usersDisliked.length;
-//         post.save()
-//             .then(() => res.status(201).json({ message: 'Post rated'}))
-//             .catch(error => res.status(400).json({ error }));
-//     })
-//     .catch(error => res.status(500).json({ message: "There's an " + error }));
-// }
-
 exports.likePost = (req, res, next) => {
-    const id = req.params.id;
-
-    Post.findByPk(id)
-    .then(post => {
-        const usersLiked = post.usersLiked;
-        const usersDisliked = post.usersDisliked;
-        const userId = req.token.userId;
+    const likeObject = {
+        like: req.body.like,
+        postId: req.params.id,
+        userId: req.token.userId
+    }
 
         switch (req.body.like) {
             case 1:
-                if (!usersLiked.includes(userId) && !usersDisliked.includes(userId)) {
-                    console.log(typeof(usersLiked))
-                    Post.update({ usersLiked: [...usersLiked, userId]}, {
-                        where: { id: id }
-                    })
-                }
-                break;
             case -1:
-                if (!usersDisliked.includes(userId) && !usersLiked.includes(userId)) {
-                    Post.update({ usersDisliked: [...usersDisliked, userId]}, {
-                        where: { id: id }
+                Like.findOne({ where: { postId: req.params.id, userId: req.token.userId } })
+                    .then(like => {
+                        if (!like) {
+                            Like.create(likeObject)
+                            .then(() => res.status(201).json({ message: 'like or disliked'}))
+                            .catch(error => res.status(400).json({ error }));
+                        } else {
+                            res.send({ message: 'Post already liked or disliked'})
+                        }
                     })
-                }
-                break;
+                    .catch(error => res.status(500).json({ message: "There's an " + error }));
+                break; 
+            
             case 0:
-                if (usersLiked.includes(userId)) {
-                    usersLiked.remove(userId)}
-                    else if (usersDisliked.includes(userId)){
-                        usersDisliked.remove(userId)
-                    }
-                break;
+                Like.findOne({ where: { postId: req.params.id, userId: req.token.userId } })
+                    .then(like => {
+                        if (like) {
+                            Like.destroy({ where: { postId: req.params.id, userId: req.token.userId }})
+                            .then(() => res.status(200).json({ message: 'like or disliked cancelled'}))
+                            .catch(error => res.status(400).json({ error }));
+                        } else {
+                            res.send({ message: 'Post not rated yet'})
+                        }
+                    })
         }
-        post.likes = post.usersLiked.length;
-        post.dislikes = post.usersDisliked.length;
-        post.save()
-            .then(() => res.status(201).json({ message: 'Post rated'}))
-            .catch(error => res.status(400).json({ error }));
-    })
-    .catch(error => res.status(500).json({ message: "There's an " + error }));
-}
+
+    }
