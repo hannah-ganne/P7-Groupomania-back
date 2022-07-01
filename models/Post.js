@@ -11,10 +11,6 @@ const Post = db.define('post', {
     topic: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT, allowNull: false },
     imageUrl: { type: DataTypes.STRING, allowNull: false},
-    likes: { type: DataTypes.INTEGER, allowNull: false },
-    dislikes: { type: DataTypes.INTEGER, allowNull: false },
-    usersLiked: { type: DataTypes.JSON, allowNull: false },
-    usersDisliked: { type: DataTypes.JSON, allowNull: false },
 }, {
     freezeTableName: true
 });
