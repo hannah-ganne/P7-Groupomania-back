@@ -2,16 +2,44 @@ const Post = require('../models/post.js');
 const Like = require('../models/likes');
 const fs = require('fs');
 const { send } = require('process');
-const e = require('express');
+const Comment = require('../models/comment')
+const User = require('../models/user')
 
 /**
  * Load all the posts
  */
 exports.getAllPosts = (req, res, next) => {
-    Post.findAll()
-    .then(posts => res.send(posts))
-    .catch(error => res.status(400).json({ message: "There's an " + error }));
-};
+    switch (req.body.sort) {
+        case 'latest':
+            Post.findAll({
+                order: [
+                    ['createdAt', 'desc']
+                ]
+            })
+            .then(posts => res.send(posts))
+            .catch(error => res.status(400).json({ message: "There's an " + error }));
+            break;
+        
+        case 'oldest':
+            Post.findAll({
+                order: [
+                    ['createdAt', 'asc']
+                ]
+            })
+            .then(posts => res.send(posts))
+                .catch(error => res.status(400).json({ message: "There's an " + error }));
+            
+        case 'mostPupular':
+            
+            
+        default:
+            Post.findAll()
+            .then(posts => res.send(posts))
+            .catch(error => res.status(400).json({ message: "There's an " + error }));
+            break;
+    }
+
+}
 
 /**
  * Load one specific post
@@ -19,10 +47,21 @@ exports.getAllPosts = (req, res, next) => {
 exports.getPost = (req, res, next) => {
     const id = req.params.id;
 
-    Post.findByPk(id)
-    .then(post => {
+
+    Post.findByPk(id, {
+        include: [
+            { model: Comment, include: [{ model: User, attributes: ['firstName', 'lastName', 'imageUrl'] }]},
+            { model: User, attributes: ['firstName', 'lastName', 'imageUrl', 'department', 'expertIn', 'interestedIn', 'oneWord', 'isUpFor'] },
+            { model: Like }
+        ]
+    })
+        .then(post => {
+        let likeTotal = 0;
         if (post) {
-            res.send(post);
+            post.countLikes()
+                .then(likes => likeTotal = likes)
+            
+            res.send({ post: post, likes: likeTotal });
         } else {
             res.status(404).send({
                 message: `cannot find Post with id ${id}`
