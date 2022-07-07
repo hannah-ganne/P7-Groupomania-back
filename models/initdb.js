@@ -3,7 +3,7 @@ const User = require('./user');
 const Post = require('./post');
 const Comment = require('./comment');
 const Like = require('./likes');
-// const Populate = require('./populate');
+const Populate = require('./populate');
 const Department = require('./department');
 const Topic = require('./topic')
 
@@ -23,7 +23,7 @@ let Init = async () => {
     await Department.sync({ alter: true });
     await Topic.sync({ alter: true });
 
-    // await Populate();
+    await Populate();
 }
 
 module.exports = Init;

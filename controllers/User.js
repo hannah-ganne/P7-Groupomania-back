@@ -105,22 +105,22 @@ exports.setProfile = (req, res, next) => {
         })
 }
 
-/**
- * Profile viewing
- */
-exports.viewProfile = (req, res, next) => {
+// /**
+//  * Profile viewing
+//  */
+// exports.viewProfile = (req, res, next) => {
 
-    Post.findOne({ where: { id: req.params.id }, include: User })
-        .then(post => {
-            const userProfile = {
-                name: `${post.user.firstName} ${post.user.lastName}`,
-                department: post.user.department,
-                expertIn: post.user.expertIn,
-                interestedIn: post.user.interestedIn,
-                oneWord: post.user.oneWord,
-                isUpFor: post.user.isUpFor
-            }
-            res.send(userProfile)
-        })
-        .catch(error => res.status(500).json({ message: "There's an " + error }));
-};
+//     Post.findOne({ where: { id: req.params.id }, include: User })
+//         .then(post => {
+//             const userProfile = {
+//                 name: `${post.user.firstName} ${post.user.lastName}`,
+//                 department: post.user.department,
+//                 expertIn: post.user.expertIn,
+//                 interestedIn: post.user.interestedIn,
+//                 oneWord: post.user.oneWord,
+//                 isUpFor: post.user.isUpFor
+//             }
+//             res.send(userProfile)
+//         })
+//         .catch(error => res.status(500).json({ message: "There's an " + error }));
+// };

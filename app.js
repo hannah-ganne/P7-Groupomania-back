@@ -7,7 +7,8 @@ const Init = require('./models/initdb');
 
 const postRoutes = require('./routes/post.js');
 const userRoutes = require('./routes/user.js');
-const commentRoutes = require('./routes/comment.js')
+const commentRoutes = require('./routes/comment.js');
+const likeRoutes = require('./routes/like.js')
 
 
 const app = express(); 
@@ -31,20 +32,13 @@ app.use((req, res, next) => {
     next();
 });
 
-//testing database connection
-// try {
-//     await db.authenticate();
-//     console.log('Connection has been established successfully.');
-//     } catch (error) {
-//     console.error('Unable to connect to the database:', error);
-//     }
-
 Init()
     .then(() => {
         app.use('/images', express.static(path.join(__dirname, 'images')));
         app.use('/api/posts', postRoutes);
         app.use('/api/auth', userRoutes);
         app.use('/api/posts', commentRoutes);
+        app.use('/api/posts', likeRoutes)
     })
     .catch(err => console.log(err));
 

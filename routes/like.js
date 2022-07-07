@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const commentCtrl = require('../controllers/Comment.js');
 
-router.post('/:id/comment', auth, commentCtrl.createComment);
+const likeCtrl = require('../controllers/Like');
+
+router.post('/:id/like', auth, likeCtrl.likePost);
 
 module.exports = router; 

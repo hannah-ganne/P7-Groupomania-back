@@ -3,14 +3,15 @@ const Like = require('../models/likes');
 const fs = require('fs');
 const { send } = require('process');
 const Comment = require('../models/comment')
-const User = require('../models/user')
+const User = require('../models/user');
+const { post } = require('../app.js');
 
 /**
  * Load all the posts
  */
 exports.getAllPosts = (req, res, next) => {
     switch (req.body.sort) {
-        case 'latest':
+        case 0:
             Post.findAll({
                 order: [
                     ['createdAt', 'desc']
@@ -20,17 +21,26 @@ exports.getAllPosts = (req, res, next) => {
             .catch(error => res.status(400).json({ message: "There's an " + error }));
             break;
         
-        case 'oldest':
+        case 1:
             Post.findAll({
                 order: [
                     ['createdAt', 'asc']
                 ]
             })
-            .then(posts => res.send(posts))
+                .then(posts => res.send(posts))
                 .catch(error => res.status(400).json({ message: "There's an " + error }));
+            break;
             
-        case 'mostPupular':
-            
+        case 2:
+            Post.findAll({
+                include: [
+                    { model: User, attributes: ['firstName', 'department', 'imageUrl'] },
+                    { model: Comment},
+                    { model: Like }
+            ] })
+                .then(posts => res.send(posts))
+                .catch(error => res.status(400).json({ message: "There's an " + error }));
+            break;
             
         default:
             Post.findAll()
@@ -56,12 +66,22 @@ exports.getPost = (req, res, next) => {
         ]
     })
         .then(post => {
-        let likeTotal = 0;
-        if (post) {
-            post.countLikes()
-                .then(likes => likeTotal = likes)
-            
-            res.send({ post: post, likes: likeTotal });
+
+            if (post) {
+                const likeTotal = post.countLikes({ where: { like: 1 } })
+                const dislikeTotal = post.countLikes({ where: { like: -1 } })
+                const commentTotal = post.countComments()
+
+                Promise.all([likeTotal, dislikeTotal, commentTotal])
+                        .then(values => {
+                        res.send({
+                            post: post,
+                            likeTotal: values[0],
+                            dislikeTotal: values[1],
+                            commentTotal: values[2]
+                        })
+                })
+
         } else {
             res.status(404).send({
                 message: `cannot find Post with id ${id}`
@@ -161,44 +181,3 @@ exports.deletePost = (req, res, next) => {
     })
     .catch(error => res.status(500).json({ message: "There's an " + error }));
 };
-
-/**
- * like/dislike/cancel like/dislike post
- */
-exports.likePost = (req, res, next) => {
-    const likeObject = {
-        like: req.body.like,
-        postId: req.params.id,
-        userId: req.token.userId
-    }
-
-        switch (req.body.like) {
-            case 1:
-            case -1:
-                Like.findOne({ where: { postId: req.params.id, userId: req.token.userId } })
-                    .then(like => {
-                        if (!like) {
-                            Like.create(likeObject)
-                            .then(() => res.status(201).json({ message: 'like or disliked'}))
-                            .catch(error => res.status(400).json({ error }));
-                        } else {
-                            res.send({ message: 'Post already liked or disliked'})
-                        }
-                    })
-                    .catch(error => res.status(500).json({ message: "There's an " + error }));
-                break; 
-            
-            case 0:
-                Like.findOne({ where: { postId: req.params.id, userId: req.token.userId } })
-                    .then(like => {
-                        if (like) {
-                            Like.destroy({ where: { postId: req.params.id, userId: req.token.userId }})
-                            .then(() => res.status(200).json({ message: 'like or disliked cancelled'}))
-                            .catch(error => res.status(400).json({ error }));
-                        } else {
-                            res.send({ message: 'Post not rated yet'})
-                        }
-                    })
-        }
-
-    }
