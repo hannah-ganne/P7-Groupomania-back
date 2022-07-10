@@ -1,10 +1,11 @@
-const Post = require('../models/post.js');
+const Post = require('../models/post');
 const Like = require('../models/likes');
 const fs = require('fs');
 const { send } = require('process');
 const Comment = require('../models/comment')
 const User = require('../models/user');
 const { post } = require('../app.js');
+const { Op, Sequelize } = require('sequelize');
 
 /**
  * Load all the posts
@@ -38,8 +39,6 @@ exports.getAllPosts = (req, res, next) => {
                     { model: Comment},
                     { model: Like }
             ] })
-                .then(posts => res.send(posts))
-                .catch(error => res.status(400).json({ message: "There's an " + error }));
             break;
             
         default:
@@ -61,7 +60,7 @@ exports.getPost = (req, res, next) => {
     Post.findByPk(id, {
         include: [
             { model: Comment, include: [{ model: User, attributes: ['firstName', 'lastName', 'imageUrl'] }]},
-            { model: User, attributes: ['firstName', 'lastName', 'imageUrl', 'department', 'expertIn', 'interestedIn', 'oneWord', 'isUpFor'] },
+            { model: User, attributes: ['firstName', 'lastName', 'email', 'imageUrl', 'department', 'expertIn', 'interestedIn', 'oneWord', 'isUpFor'] },
             { model: Like }
         ]
     })
@@ -181,3 +180,45 @@ exports.deletePost = (req, res, next) => {
     })
     .catch(error => res.status(500).json({ message: "There's an " + error }));
 };
+
+exports.filterByDept = (req, res, next) => {
+    Post.findAll({
+        include:
+        {
+            model: User,
+            attributes: ['department'],
+            where: {
+                department: req.body.department
+            }
+        }
+        
+    })
+        .then(posts => res.send(posts))
+        .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
+
+exports.filterByTopic = (req, res, next) => {
+    Post.findAll({
+        where: {
+            topic: req.body.topic
+        }
+    })
+        .then(posts => res.send(posts))
+        .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
+
+exports.searchPosts = (req, res, next) => {
+
+let searchKeyword = req.body.keyword.toLowerCase();
+
+Post.findAll({
+    where: {
+        [Op.or]: [
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', '%' + searchKeyword + '%'),
+            Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('description')), 'LIKE', '%' + searchKeyword + '%')
+        ]
+    }
+})
+    .then(posts => res.send(posts))
+    .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
