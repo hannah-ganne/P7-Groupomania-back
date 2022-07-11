@@ -6,22 +6,14 @@ const Comment = require('../models/comment')
 const User = require('../models/user');
 const { post } = require('../app.js');
 const { Op, Sequelize } = require('sequelize');
+const AES = require('../utils/AES')
 
 /**
  * Load all the posts
  */
 exports.getAllPosts = (req, res, next) => {
     switch (req.body.sort) {
-        case 0:
-            Post.findAll({
-                order: [
-                    ['createdAt', 'desc']
-                ]
-            })
-            .then(posts => res.send(posts))
-            .catch(error => res.status(400).json({ message: "There's an " + error }));
-            break;
-        
+
         case 1:
             Post.findAll({
                 order: [
@@ -36,13 +28,21 @@ exports.getAllPosts = (req, res, next) => {
             Post.findAll({
                 include: [
                     { model: User, attributes: ['firstName', 'department', 'imageUrl'] },
-                    { model: Comment},
-                    { model: Like }
+                    { model: Comment, attributes: [Sequelize.fn('COUNT', Sequelize.col('id')), 'commentCount']},
+                    { model: Like, attributes: [Sequelize.fn('COUNT', Sequelize.col(''))]}
             ] })
             break;
-            
+        
+        case 0:
         default:
-            Post.findAll()
+            Post.findAll({
+                include: [
+
+                ],
+                order: [
+                    ['createdAt', 'desc']
+                ]
+            })
             .then(posts => res.send(posts))
             .catch(error => res.status(400).json({ message: "There's an " + error }));
             break;
@@ -75,6 +75,7 @@ exports.getPost = (req, res, next) => {
                         .then(values => {
                         res.send({
                             post: post,
+                            email: AES.decrypt(post.user.email), 
                             likeTotal: values[0],
                             dislikeTotal: values[1],
                             commentTotal: values[2]
