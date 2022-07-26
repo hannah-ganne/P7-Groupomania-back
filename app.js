@@ -8,7 +8,8 @@ const Init = require('./models/initdb');
 const postRoutes = require('./routes/post.js');
 const userRoutes = require('./routes/user.js');
 const commentRoutes = require('./routes/comment.js');
-const likeRoutes = require('./routes/like.js')
+const likeRoutes = require('./routes/like.js');
+const listRoutes = require('./routes/list.js')
 
 
 const app = express(); 
@@ -38,7 +39,8 @@ Init()
         app.use('/api/posts', postRoutes);
         app.use('/api/auth', userRoutes);
         app.use('/api/posts', commentRoutes);
-        app.use('/api/posts', likeRoutes)
+        app.use('/api/posts', likeRoutes);
+        app.use('/api/list', listRoutes);
     })
     .catch(err => console.log(err));
 

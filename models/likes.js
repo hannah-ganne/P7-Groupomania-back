@@ -5,7 +5,7 @@ const db = require('../config/database.js');
 // define schema
 const Like = db.define('likes', {
     // define attributes
-    like: { type: DataTypes.INTEGER, allowNull: false },
+    type: { type: DataTypes.INTEGER, allowNull: false },
 }, {
     freezeTableName: true
 });

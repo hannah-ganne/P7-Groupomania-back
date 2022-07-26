@@ -3,9 +3,6 @@ const User = require('./user');
 const Post = require('./post');
 const Comment = require('./comment');
 const Like = require('./likes');
-const Populate = require('./populate');
-const Department = require('./department');
-const Topic = require('./topic')
 
 let Init = async () => {
     Post.belongsTo(User, { onDelete: "CASCADE" });
@@ -20,10 +17,7 @@ let Init = async () => {
     await Post.sync({alter: true});
     await Comment.sync({ alter: true });
     await Like.sync({ alter: true });
-    await Department.sync({ alter: true });
-    await Topic.sync({ alter: true });
 
-    await Populate();
 }
 
 module.exports = Init;

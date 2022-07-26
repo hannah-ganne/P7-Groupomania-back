@@ -4,51 +4,96 @@ const fs = require('fs');
 const { send } = require('process');
 const Comment = require('../models/comment')
 const User = require('../models/user');
-const { post } = require('../app.js');
-const { Op, Sequelize } = require('sequelize');
+// const { post } = require('../app.js');
+const db = require('../config/database.js');
 const AES = require('../utils/AES')
 
 /**
  * Load all the posts
  */
 exports.getAllPosts = (req, res, next) => {
-    switch (req.body.sort) {
+    let sort = req.body.sort ?? 0;
+    let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], [db.literal('likesCount'), 'DESC']
+]
 
-        case 1:
-            Post.findAll({
-                order: [
-                    ['createdAt', 'asc']
+    Post.findAll({
+        include: {
+                    model: User,
+                    attributes: ['firstName', 'department', 'imageUrl']
+                },
+        attributes: 
+            {
+            include: [
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM likes AS likes
+                        WHERE
+                            likes.postId = post.id
+                            AND
+                            likes.type = 1
+                    )`),
+                    'likesCount'
+                    ],
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM comment AS comments
+                        WHERE
+                            comments.postId = post.id
+                    )`),
+                    'commentsCount'
                 ]
-            })
-                .then(posts => res.send(posts))
-                .catch(error => res.status(400).json({ message: "There's an " + error }));
-            break;
-            
-        case 2:
-            Post.findAll({
-                include: [
-                    { model: User, attributes: ['firstName', 'department', 'imageUrl'] },
-                    { model: Comment, attributes: [Sequelize.fn('COUNT', Sequelize.col('id')), 'commentCount']},
-                    { model: Like, attributes: [Sequelize.fn('COUNT', Sequelize.col(''))]}
-            ] })
-            break;
-        
-        case 0:
-        default:
-            Post.findAll({
-                include: [
-
-                ],
-                order: [
-                    ['createdAt', 'desc']
-                ]
-            })
-            .then(posts => res.send(posts))
-            .catch(error => res.status(400).json({ message: "There's an " + error }));
-            break;
-    }
-
+            ]
+        },
+        order: [sortArray[sort]]
+    })
+        .then(posts => res.send(posts))
+        .catch(error => res.status(400).json({ message: "There's an " + error }));
 }
+// exports.getAllPosts = (req, res, next) => {
+
+    // let sort = req.body.sort ?? 0;
+
+    // let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], '']
+
+//     Post.findAll({
+//         include: [
+//             {
+//                 model: User,
+//                 attributes: ['firstName', 'department', 'imageUrl']
+//             },
+//             {
+//                 model: Comment,
+//                 attributes: [
+//                     db.literal(`(
+//                         SELECT COUNT(*)
+//                         FROM comment
+//                         WHERE
+//                             comment.postId = post.id
+//                     )`),
+//                     'commentsCount'
+//                 ]
+//             },
+//             {
+//                 model: Like,
+//                 attributes: [
+//                     db.literal(`(
+//                         SELECT COUNT(*)
+//                         FROM likes
+//                         WHERE
+//                             likes.postId = post.id
+//                     )`),
+//                     'likesCount'
+//                 ]
+//             }
+//         ],
+        // order: sortArray[sort]
+
+//     })
+//         .then(posts => res.send(posts))
+//         .catch(error => res.status(400).json({ message: "There's an " + error }));
+// }
 
 /**
  * Load one specific post
@@ -67,18 +112,18 @@ exports.getPost = (req, res, next) => {
         .then(post => {
 
             if (post) {
-                const likeTotal = post.countLikes({ where: { like: 1 } })
-                const dislikeTotal = post.countLikes({ where: { like: -1 } })
-                const commentTotal = post.countComments()
+                const likesCount = post.countLikes({ where: { type: 1 } })
+                const dislikesCount = post.countLikes({ where: { type: -1 } })
+                const commentsCount = post.countComments()
 
-                Promise.all([likeTotal, dislikeTotal, commentTotal])
+                Promise.all([likesCount, dislikesCount, commentsCount])
                         .then(values => {
                         res.send({
                             post: post,
                             email: AES.decrypt(post.user.email), 
-                            likeTotal: values[0],
-                            dislikeTotal: values[1],
-                            commentTotal: values[2]
+                            likesCount: values[0],
+                            dislikesCount: values[1],
+                            commentsCount: values[2]
                         })
                 })
 

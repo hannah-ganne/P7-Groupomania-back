@@ -10,6 +10,9 @@ const userCtrl = require('../controllers/User.js');
 router.post('/signup', passwordValidator, userCtrl.signup);
 router.post('/login', limiter.loginLimiter, userCtrl.login);
 router.put('/setProfile', auth, multer, userCtrl.setProfile);
-
+router.get('/viewProfile', auth, userCtrl.viewProfile);
+router.post('/logout', auth, userCtrl.logout);
+router.delete('/delete', auth, userCtrl.deleteUser);
+router.get('/users', auth, userCtrl.getAllUsers)
 
 module.exports = router; 

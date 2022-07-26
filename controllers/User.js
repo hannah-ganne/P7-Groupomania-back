@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt');
-const User = require('../models/user');
+const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const AES = require('../utils/AES');
 const fs = require('fs');
-const Post = require('../models/post');
+// const session = require('express-session')
 
 /**
  * user sign up
@@ -16,7 +16,8 @@ exports.signup = (req, res, next) => {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: AES.encrypt(req.body.email),
-        password: hash
+        password: hash,
+        isUpFor: []
         };
 
         User.create(user)
@@ -56,6 +57,10 @@ exports.login = (req, res, next) => {
         })
         .catch(error => res.status(500).json({ message: "there's an" + error }));
 };
+
+exports.logout = (req, res, next) => {
+    
+}
 
 /**
  * Profile setting
@@ -105,22 +110,44 @@ exports.setProfile = (req, res, next) => {
         })
 }
 
-// /**
-//  * Profile viewing
-//  */
-// exports.viewProfile = (req, res, next) => {
+/**
+ * Profile viewing
+ */
+exports.viewProfile = (req, res, next) => {
 
-//     Post.findOne({ where: { id: req.params.id }, include: User })
-//         .then(post => {
-//             const userProfile = {
-//                 name: `${post.user.firstName} ${post.user.lastName}`,
-//                 department: post.user.department,
-//                 expertIn: post.user.expertIn,
-//                 interestedIn: post.user.interestedIn,
-//                 oneWord: post.user.oneWord,
-//                 isUpFor: post.user.isUpFor
-//             }
-//             res.send(userProfile)
-//         })
-//         .catch(error => res.status(500).json({ message: "There's an " + error }));
-// };
+    User.findOne({
+        where: { id: req.token.userId }
+    })
+        .then(user => {
+            const userProfile = {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                department: user.department,
+                expertIn: user.expertIn,
+                interestedIn: user.interestedIn,
+                oneWord: user.oneWord,
+                isUpFor: user.isUpFor,
+                imageUrl: user.imageUrl
+            }
+            res.send(userProfile)
+        })
+        .catch(error => res.status(500).json({ message: "There's an " + error }));
+};
+
+exports.getAllUsers = (req, res, next) => {
+    User.findAll()
+        .then(users => res.send(users))
+        .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
+
+/**
+ * Delete account
+ */
+exports.deleteUser = (req, res, next) => {
+
+    User.destroy({
+        where: { id: req.token.userId }
+    })
+        .then(() => res.status(200).json({ message: 'User account deleted'}))
+        .catch(error => res.status(400).json({ error }));
+};
