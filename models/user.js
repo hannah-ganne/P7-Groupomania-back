@@ -8,12 +8,13 @@ const User = db.define('user', {
     lastName: { type: DataTypes.STRING, allowNull: false }, 
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING(64), allowNull: false },
-    imageUrl: { type: DataTypes.STRING, allowNull: false, defaultValue: '../images/user.png'},
+    imageUrl: { type: DataTypes.STRING },
     department: { type: DataTypes.STRING },
     expertIn: { type: DataTypes.STRING },
     interestedIn: { type: DataTypes.STRING },
     oneWord: { type: DataTypes.STRING },
-    isUpFor: { type: DataTypes.JSON }
+    isUpFor: { type: DataTypes.JSON },
+    isAdmin: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
 }, {
     freezeTableName: true
 });
