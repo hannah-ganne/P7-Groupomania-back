@@ -20,7 +20,26 @@ exports.createComment = (req, res, next) => {
 // /**
 //  * Delete a comment
 //  */
-// exports.deleteComment = (req, res, next) => {
+exports.deleteComment = (req, res, next) => {
 
-//     Comment.findOne()
-// }
+    const id = req.params.commentId;
+
+    Comment.findByPk(id)
+    .then(comment => {
+        if (!comment) {
+            return res.status(404).json({
+                error: new Error('Comment does not exist')
+            })
+        }
+        if (comment.userId !== req.token.userId && !req.token.isAdmin) {
+            return res.status(403).json({
+                error: new Error('Request not authorized')
+            })
+        } else if (comment.userId === req.token.userId || req.token.isAdmin) {
+            Comment.destroy({ where: { id: id } })
+            .then(() => res.status(200).json({ message: 'Comment deleted'}))
+            .catch(error => res.status(400).json({ error }));
+        }
+    })
+    .catch(error => res.status(500).json({ message: "There's an " + error }));
+}
