@@ -11,18 +11,64 @@ const fs = require('fs');
 exports.signup = (req, res, next) => {
 
     bcrypt.hash(req.body.password, 10)
-    .then(hash => {
-        const user = {
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: AES.encrypt(req.body.email),
-        password: hash,
-        isUpFor: []
-        };
+        .then(hash => {
 
-        User.create(user)
-        .then(() => res.status(201).json({ message: 'User created' }))
-        .catch(error => res.status(400).json({ error }));
+        if (req.body.firstName && req.body.lastName && req.body.email && req.body.password) {
+            const user = {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                email: AES.encrypt(req.body.email),
+                password: hash,
+                isUpFor: [
+                    {
+                        id: 1,
+                        label: "Coffee chat",
+                        checked: false
+                    },
+                    {
+                        id: 2,
+                        label: "Zoom meetings",
+                        checked: false
+                    },
+                    {
+                        id: 3,
+                        label: "Conferences",
+                        checked: false
+                    },
+                    {
+                        id: 4,
+                        label: "Office parties",
+                        checked: false
+                    },
+                    {
+                        id: 5,
+                        label: "Collaborations",
+                        checked: false
+                    },
+                    {
+                        id: 6,
+                        label: "Afterwork happy hour",
+                        checked: false
+                    },
+                    {
+                        id: 7,
+                        label: "Lunch meeting",
+                        checked: false
+                    },
+                    {
+                        id: 8,
+                        label: "Book club",
+                        checked: false
+                    }
+                ]
+            };    
+            
+            User.create(user)
+            .then(() => res.status(201).json({ message: 'User created' }))
+            .catch(error => res.status(400).json({ error }));
+        } else {
+            res.status(400).json({ message: 'Empty field is not allowed' })
+        }
     })
     .catch(error => res.status(500).json({ error }));
 };
@@ -46,8 +92,9 @@ exports.login = (req, res, next) => {
             }
             res.status(200).json({
                 userId: user.id,
+                isAdmin: user.isAdmin,
                 token: jwt.sign(
-                    { userId: user.id },
+                    { userId: user.id, isAdmin: user.isAdmin},
                     process.env.JWT_SECRET_KEY,
                     { expiresIn: '24h' }
                     ) 
@@ -57,10 +104,6 @@ exports.login = (req, res, next) => {
         })
         .catch(error => res.status(500).json({ message: "there's an" + error }));
 };
-
-exports.logout = (req, res, next) => {
-    
-}
 
 /**
  * Profile setting
@@ -80,27 +123,27 @@ exports.setProfile = (req, res, next) => {
             // Modification
             let userObject;
             if(req.file) {
-                const filename = user.imageUrl.split('/images/')[1];
                 if (user.imageUrl) {
+                    const filename = user.imageUrl.split('/images/')[1];
                     fs.unlinkSync(`images/${filename}`);
                 }
                 userObject = {
-                    ...req.body.user,
+                    ...req.body,
                     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
                     department: req.body.department,
                     expertIn: req.body.expertIn,
                     interestedIn: req.body.interestedIn,
                     oneWord: req.body.oneWord,
-                    isUpFor: req.body.isUpFor
+                    isUpFor: JSON.parse(req.body.isUpFor)
                 }
             } else {
                 userObject = {
-                    ...req.body.user,
+                    ...req.body,
                     department: req.body.department,
                     expertIn: req.body.expertIn,
                     interestedIn: req.body.interestedIn,
                     oneWord: req.body.oneWord,
-                    isUpFor: req.body.isUpFor
+                    isUpFor: JSON.parse(req.body.isUpFor)
                 }
             }
 
@@ -146,7 +189,7 @@ exports.getAllUsers = (req, res, next) => {
 exports.deleteUser = (req, res, next) => {
 
     User.destroy({
-        where: { id: req.token.userId }
+        where: { id: req.params.userId }
     })
         .then(() => res.status(200).json({ message: 'User account deleted'}))
         .catch(error => res.status(400).json({ error }));
