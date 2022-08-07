@@ -5,7 +5,7 @@ const Like = require('../models/likes');
  */
 exports.likePost = (req, res, next) => {
     const likeObject = {
-        type: req.body.like,
+        type: req.params.like,
         postId: req.params.id,
         userId: req.token.userId
     }
