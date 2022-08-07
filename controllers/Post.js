@@ -7,12 +7,14 @@ const User = require('../models/user');
 // const { post } = require('../app.js');
 const db = require('../config/database.js');
 const AES = require('../utils/AES')
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 
 /**
- * Load all the posts
+ * Sort posts
  */
-exports.getAllPosts = (req, res, next) => {
-    let sort = req.body.sort ?? 0;
+exports.sortPosts = (req, res, next) => {
+    let sort = req.params.sort ?? 0;
     let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], [db.literal('likesCount'), 'DESC']
 ]
 
@@ -51,49 +53,44 @@ exports.getAllPosts = (req, res, next) => {
         .then(posts => res.send(posts))
         .catch(error => res.status(400).json({ message: "There's an " + error }));
 }
-// exports.getAllPosts = (req, res, next) => {
 
-    // let sort = req.body.sort ?? 0;
+exports.getAllPosts = (req, res, next) => {
 
-    // let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], '']
-
-//     Post.findAll({
-//         include: [
-//             {
-//                 model: User,
-//                 attributes: ['firstName', 'department', 'imageUrl']
-//             },
-//             {
-//                 model: Comment,
-//                 attributes: [
-//                     db.literal(`(
-//                         SELECT COUNT(*)
-//                         FROM comment
-//                         WHERE
-//                             comment.postId = post.id
-//                     )`),
-//                     'commentsCount'
-//                 ]
-//             },
-//             {
-//                 model: Like,
-//                 attributes: [
-//                     db.literal(`(
-//                         SELECT COUNT(*)
-//                         FROM likes
-//                         WHERE
-//                             likes.postId = post.id
-//                     )`),
-//                     'likesCount'
-//                 ]
-//             }
-//         ],
-        // order: sortArray[sort]
-
-//     })
-//         .then(posts => res.send(posts))
-//         .catch(error => res.status(400).json({ message: "There's an " + error }));
-// }
+    Post.findAll({
+        include: {
+                    model: User,
+                    attributes: ['firstName', 'department', 'imageUrl']
+                },
+        attributes: 
+            {
+            include: [
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM likes AS likes
+                        WHERE
+                            likes.postId = post.id
+                            AND
+                            likes.type = 1
+                    )`),
+                    'likesCount'
+                    ],
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM comment AS comments
+                        WHERE
+                            comments.postId = post.id
+                    )`),
+                    'commentsCount'
+                ]
+            ]
+        },
+        order: [['createdAt', 'desc']]
+    })
+        .then(posts => res.send(posts))
+        .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
 
 /**
  * Load one specific post
@@ -136,6 +133,12 @@ exports.getPost = (req, res, next) => {
     .catch(error => res.status(500).json({ message: "There's an " + error }));
 };
 
+exports.getPostsByUser = (req, res, next) => {
+    Post.findAll({ where: { userId: req.params.userId } })
+    .then(posts => res.send(posts))
+    .catch(error => res.status(400).json({ message: "There's an " + error }));
+}
+
 /**
  * Upload a new post
  */
@@ -148,10 +151,12 @@ exports.createPost = (req, res, next) => {
         return;
     }
 
+    const imageUrl = req.file && `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+
     Post.create({
         ...req.body,
         userId: req.token.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        imageUrl: imageUrl
     })
     .then(data => res.send(data))
     .catch(error => res.status(400).send({ message: "There's an " + error }));
@@ -162,6 +167,8 @@ exports.createPost = (req, res, next) => {
  */
 exports.modifyPost = (req, res, next) => {
     const id = req.params.id;
+
+    console.log(req.body)
 
     Post.findByPk(id)
     .then(post => {
@@ -176,7 +183,6 @@ exports.modifyPost = (req, res, next) => {
                 error: new Error('Request not authorized')
             })
         }
-
         // Modification
         let postObject;
         if(req.file) {
@@ -184,7 +190,7 @@ exports.modifyPost = (req, res, next) => {
             fs.unlinkSync(`images/${filename}`);
 
             postObject = {
-                ...JSON.parse(req.body.post),
+                ...req.body,
                 userId: req.token.userId,
                 imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
             }
@@ -212,50 +218,116 @@ exports.deletePost = (req, res, next) => {
                 error: new Error('Post does not exist')
             })
         }
-        if (post.userId !== req.token.userId) {
+
+        if (post.userId !== req.token.userId && !req.token.isAdmin) {
             return res.status(403).json({
                 error: new Error('Request not authorized')
             })
-        }
-        const filename = post.imageUrl.split('/images/')[1];
-        fs.unlink(`images/${filename}`, () => {
+        } else if (post.userId === req.token.userId || req.token.isAdmin) {
+            if(req.file) {
+                const filename = post.imageUrl.split('/images/')[1];
+                fs.unlinkSync(`images/${filename}`);
+            }
+    
             Post.destroy({ where: { id: id } })
-            .then(() => res.status(200).json({ message: 'Post deleted'}))
-            .catch(error => res.status(400).json({ error }));
-        });
-    })
-    .catch(error => res.status(500).json({ message: "There's an " + error }));
+                .then(() => res.status(200).json({ message: 'Post deleted'}))
+                .catch(error => res.status(400).json({ error }));
+        }
+        })
+        .catch(error => res.status(500).json({ message: "There's an " + error }));
+
+
 };
 
 exports.filterByDept = (req, res, next) => {
-    Post.findAll({
-        include:
-        {
-            model: User,
-            attributes: ['department'],
-            where: {
-                department: req.body.department
-            }
-        }
-        
-    })
+
+    let sort = req.params.sort ?? 0;
+    let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], [db.literal('likesCount'), 'DESC']]
+
+        Post.findAll({
+            include: {
+                model: User,
+                attributes: ['firstName', 'department', 'imageUrl'],
+                where: {department: req.params.department}
+                },
+            attributes: 
+                {
+                include: [
+                    [
+                        db.literal(`(
+                            SELECT COUNT(*)
+                            FROM likes AS likes
+                            WHERE
+                                likes.postId = post.id
+                                AND
+                                likes.type = 1
+                        )`),
+                        'likesCount'
+                        ],
+                    [
+                        db.literal(`(
+                            SELECT COUNT(*)
+                            FROM comment AS comments
+                            WHERE
+                                comments.postId = post.id
+                        )`),
+                        'commentsCount'
+                    ]
+                ]
+            },
+            order: [sortArray[sort]]
+        })
         .then(posts => res.send(posts))
         .catch(error => res.status(400).json({ message: "There's an " + error }));
 }
 
 exports.filterByTopic = (req, res, next) => {
+
+    let sort = req.params.sort ?? 0;
+    let sortArray = [['createdAt', 'desc'], ['createdAt', 'asc'], [db.literal('likesCount'), 'DESC']]
+
     Post.findAll({
-        where: {
-            topic: req.body.topic
-        }
-    })
+            where: {
+                topic: req.params.topic
+                }, 
+            include: {
+                model: User,
+                attributes: ['firstName', 'department', 'imageUrl'],
+                },
+            attributes: 
+                {
+                include: [
+                    [
+                        db.literal(`(
+                            SELECT COUNT(*)
+                            FROM likes AS likes
+                            WHERE
+                                likes.postId = post.id
+                                AND
+                                likes.type = 1
+                        )`),
+                        'likesCount'
+                        ],
+                    [
+                        db.literal(`(
+                            SELECT COUNT(*)
+                            FROM comment AS comments
+                            WHERE
+                                comments.postId = post.id
+                        )`),
+                        'commentsCount'
+                    ]
+                ]
+            },
+            order: [sortArray[sort]]
+        })
         .then(posts => res.send(posts))
         .catch(error => res.status(400).json({ message: "There's an " + error }));
 }
 
 exports.searchPosts = (req, res, next) => {
 
-let searchKeyword = req.body.keyword.toLowerCase();
+let searchKeyword = req.params.keyword.toLowerCase();
 
 Post.findAll({
     where: {
@@ -263,7 +335,36 @@ Post.findAll({
             Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', '%' + searchKeyword + '%'),
             Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('description')), 'LIKE', '%' + searchKeyword + '%')
         ]
-    }
+    },
+    include: {
+        model: User,
+        attributes: ['firstName', 'department', 'imageUrl']
+    },
+    attributes: 
+            {
+            include: [
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM likes AS likes
+                        WHERE
+                            likes.postId = post.id
+                            AND
+                            likes.type = 1
+                    )`),
+                    'likesCount'
+                    ],
+                [
+                    db.literal(`(
+                        SELECT COUNT(*)
+                        FROM comment AS comments
+                        WHERE
+                            comments.postId = post.id
+                    )`),
+                    'commentsCount'
+                ]
+            ]
+        }
 })
     .then(posts => res.send(posts))
     .catch(error => res.status(400).json({ message: "There's an " + error }));
