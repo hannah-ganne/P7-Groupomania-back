@@ -13,59 +13,71 @@ exports.signup = (req, res, next) => {
     bcrypt.hash(req.body.password, 10)
         .then(hash => {
 
-        if (req.body.firstName && req.body.lastName && req.body.email && req.body.password) {
-            const user = {
-                firstName: req.body.firstName,
-                lastName: req.body.lastName,
-                email: AES.encrypt(req.body.email),
-                password: hash,
-                isUpFor: [
-                    {
-                        id: 1,
-                        label: "Coffee chat",
-                        checked: false
-                    },
-                    {
-                        id: 2,
-                        label: "Zoom meetings",
-                        checked: false
-                    },
-                    {
-                        id: 3,
-                        label: "Conferences",
-                        checked: false
-                    },
-                    {
-                        id: 4,
-                        label: "Office parties",
-                        checked: false
-                    },
-                    {
-                        id: 5,
-                        label: "Collaborations",
-                        checked: false
-                    },
-                    {
-                        id: 6,
-                        label: "Afterwork happy hour",
-                        checked: false
-                    },
-                    {
-                        id: 7,
-                        label: "Lunch meeting",
-                        checked: false
-                    },
-                    {
-                        id: 8,
-                        label: "Book club",
-                        checked: false
+            if (req.body.firstName && req.body.lastName && req.body.email && req.body.password) {
+
+            User.findOne({
+                where: 
+                    { email: AES.encrypt(req.body.email) }
+            })
+                .then(user => {
+                    if (user) {
+                        return res.status(409).json({ message: 'Email already exists'})
                     }
-                ]
-            };    
-            
-            User.create(user)
-            .then(() => res.status(201).json({ message: 'User created' }))
-            .catch(error => res.status(400).json({ error }));
+
+                    const userObject = {
+                        firstName: req.body.firstName,
+                        lastName: req.body.lastName,
+                        email: AES.encrypt(req.body.email),
+                        password: hash,
+                        isUpFor: [
+                            {
+                                id: 1,
+                                label: "Coffee chat",
+                                checked: false
+                            },
+                            {
+                                id: 2,
+                                label: "Zoom meetings",
+                                checked: false
+                            },
+                            {
+                                id: 3,
+                                label: "Conferences",
+                                checked: false
+                            },
+                            {
+                                id: 4,
+                                label: "Office parties",
+                                checked: false
+                            },
+                            {
+                                id: 5,
+                                label: "Collaborations",
+                                checked: false
+                            },
+                            {
+                                id: 6,
+                                label: "Afterwork happy hour",
+                                checked: false
+                            },
+                            {
+                                id: 7,
+                                label: "Lunch meeting",
+                                checked: false
+                            },
+                            {
+                                id: 8,
+                                label: "Book club",
+                                checked: false
+                            }
+                        ]
+                    };    
+                    
+                    User.create(userObject)
+                    .then(() => res.status(201).json({ message: 'User created' }))
+                    .catch(error => res.status(400).json({ error }));
+                })
+                .catch(error => res.status(500).json({ error }))
         } else {
             res.status(400).json({ message: 'Empty field is not allowed' })
         }
@@ -146,10 +158,9 @@ exports.setProfile = (req, res, next) => {
                     isUpFor: JSON.parse(req.body.isUpFor)
                 }
             }
-
-            User.update( userObject, { where: { id: req.token.userId }})
-            .then(user => res.status(200).json({ message: 'Profile updated'}))
-            .catch(error => res.status(400).json({ message: "There's an " + error }));
+                User.update( userObject, { where: { id: req.token.userId }})
+                .then(user => res.status(200).json({ message: 'Profile updated'}))
+                .catch(error => res.status(400).json({ message: "There's an " + error }));
         })
 }
 
