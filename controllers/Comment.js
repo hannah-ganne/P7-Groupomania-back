@@ -11,10 +11,11 @@ exports.createComment = (req, res, next) => {
         userId: req.token.userId,
         postId: req.params.id
     }
-
-    Comment.create(comment)
-    .then(data => res.send(data))
-    .catch(error => res.status(400).json({ error }));
+    if (req.body.comment) {
+        Comment.create(comment)
+        .then(data => res.send(data))
+        .catch(error => res.status(400).json({ error }));
+    }
 };
     
 // /**
