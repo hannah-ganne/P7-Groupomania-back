@@ -112,17 +112,28 @@ exports.getPost = (req, res, next) => {
                 const likesCount = post.countLikes({ where: { type: 1 } })
                 const dislikesCount = post.countLikes({ where: { type: -1 } })
                 const commentsCount = post.countComments()
+                let alreadyLiked = 0;
 
-                Promise.all([likesCount, dislikesCount, commentsCount])
-                        .then(values => {
-                        res.send({
-                            post: post,
-                            email: AES.decrypt(post.user.email), 
-                            likesCount: values[0],
-                            dislikesCount: values[1],
-                            commentsCount: values[2]
-                        })
+                Like.findOne({ where: { postId: id, userId: req.token.userId } })
+                    .then(like => {
+                    
+                    if (like) {
+                        alreadyLiked = like.type;
+                    }
+                        
+                    Promise.all([likesCount, dislikesCount, commentsCount])
+                    .then(values => {
+                    res.send({
+                        post: post,
+                        email: AES.decrypt(post.user.email), 
+                        likesCount: values[0],
+                        dislikesCount: values[1],
+                        commentsCount: values[2],
+                        alreadyLiked
+                    })
+            })
                 })
+                .catch(err => console.log(err))
 
         } else {
             res.status(404).send({
@@ -153,13 +164,15 @@ exports.createPost = (req, res, next) => {
 
     const imageUrl = req.file && `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
 
-    Post.create({
-        ...req.body,
-        userId: req.token.userId,
-        imageUrl: imageUrl
-    })
-    .then(data => res.send(data))
-    .catch(error => res.status(400).send({ message: "There's an " + error }));
+    if (req.body.title && req.body.topic && req.body.description) {
+        Post.create({
+            ...req.body,
+            userId: req.token.userId,
+            imageUrl: imageUrl
+        })
+        .then(data => res.send(data))
+        .catch(error => res.status(400).send({ message: "There's an " + error }));
+    }
     };
 
 /**
