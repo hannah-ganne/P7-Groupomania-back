@@ -109,7 +109,8 @@ exports.login = (req, res, next) => {
                     { userId: user.id, isAdmin: user.isAdmin},
                     process.env.JWT_SECRET_KEY,
                     { expiresIn: '24h' }
-                    ) 
+                ),
+                imageUrl: user.imageUrl
             });
             })
             .catch(error => res.status(500).json({ error }));
