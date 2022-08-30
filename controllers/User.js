@@ -135,7 +135,7 @@ exports.setProfile = (req, res, next) => {
             
             // Modification
             let userObject;
-            if(req.file) {
+            if (req.file) {
                 if (user.imageUrl) {
                     const filename = user.imageUrl.split('/images/')[1];
                     fs.unlinkSync(`images/${filename}`);
@@ -159,8 +159,17 @@ exports.setProfile = (req, res, next) => {
                     isUpFor: JSON.parse(req.body.isUpFor)
                 }
             }
-                User.update( userObject, { where: { id: req.token.userId }})
-                    .then(user => res.status(200).json({ imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` }))
+            
+            const imageUrl = user.imageUrl
+            User.update(userObject, { where: { id: req.token.userId } })
+                .then(user => {
+                    if (req.file) {
+                        res.status(200).json({ imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` })
+                    } else {
+                        res.status(200).json({ imageUrl: imageUrl})
+                    }
+                }
+                )
                 .catch(error => res.status(400).json({ message: "There's an " + error }));
         })
 }
