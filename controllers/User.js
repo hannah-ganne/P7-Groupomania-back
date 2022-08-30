@@ -160,7 +160,7 @@ exports.setProfile = (req, res, next) => {
                 }
             }
                 User.update( userObject, { where: { id: req.token.userId }})
-                .then(user => res.status(200).json({ message: 'Profile updated'}))
+                    .then(user => res.status(200).json({ imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` }))
                 .catch(error => res.status(400).json({ message: "There's an " + error }));
         })
 }
