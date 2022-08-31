@@ -3,8 +3,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const AES = require('../utils/AES');
 const fs = require('fs');
-// const session = require('express-session')
-
+const capitalize = require('../utils/capitalize')
+    
 /**
  * user sign up
  */
@@ -25,8 +25,8 @@ exports.signup = (req, res, next) => {
                     }
 
                     const userObject = {
-                        firstName: req.body.firstName,
-                        lastName: req.body.lastName,
+                        firstName: capitalize.firstLetter(req.body.firstName),
+                        lastName: capitalize.firstLetter(req.body.lastName),
                         email: AES.encrypt(req.body.email),
                         password: hash,
                         isUpFor: [
@@ -142,6 +142,8 @@ exports.setProfile = (req, res, next) => {
                 }
                 userObject = {
                     ...req.body,
+                    firstName: capitalize.firstLetter(req.body.firstName),
+                    lastName: capitalize.firstLetter(req.body.lastName),
                     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
                     department: req.body.department,
                     expertIn: req.body.expertIn,
@@ -152,6 +154,8 @@ exports.setProfile = (req, res, next) => {
             } else {
                 userObject = {
                     ...req.body,
+                    firstName: capitalize.firstLetter(req.body.firstName),
+                    lastName: capitalize.firstLetter(req.body.lastName),
                     department: req.body.department,
                     expertIn: req.body.expertIn,
                     interestedIn: req.body.interestedIn,
