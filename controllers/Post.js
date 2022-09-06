@@ -184,36 +184,37 @@ exports.modifyPost = (req, res, next) => {
     console.log(req.body)
 
     Post.findByPk(id)
-    .then(post => {
-        // Verification
-        if (!post) {
-            return res.status(404).json({
-                error: new Error('Post does not exist!')
-            })
-        }
-        if (post.userId !== req.token.userId) {
-            return res.status(403).json({
-                error: new Error('Request not authorized')
-            })
-        }
-        // Modification
-        let postObject;
-        if(req.file) {
-            const filename = post.imageUrl.split('/images/')[1];
-            fs.unlinkSync(`images/${filename}`);
-
-            postObject = {
-                ...req.body,
-                userId: req.token.userId,
-                imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        .then(post => {
+            // Verification
+            if (!post) {
+                return res.status(404).json({
+                    error: new Error('Post does not exist!')
+                })
             }
-        } else {
-            postObject = { ...req.body, userId: req.token.userId}
-        }
 
-        Post.update( postObject, { where: { id: id }})
-        .then(post => res.status(200).json({ message: 'Post modified'}))
-        .catch(error => res.status(400).json({ message: "There's an " + error }));
+            if (post.userId === req.token.userId || req.token.isAdmin) {
+                let postObject;
+                if (req.file) {
+                    const filename = post.imageUrl.split('/images/')[1];
+                    fs.unlinkSync(`images/${filename}`);
+
+                    postObject = {
+                        ...req.body,
+                        // userId: req.token.userId,
+                        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+                    }
+                } else {
+                    postObject = { ...req.body}
+                }
+
+                Post.update(postObject, { where: { id: id } })
+                    .then(post => res.status(200).json({ message: 'Post modified' }))
+                    .catch(error => res.status(400).json({ message: "There's an " + error }));
+            } else {
+                return res.status(403).json({
+                    error: new Error('Request not authorized')
+                })
+            }
     })
     .catch(error => res.status(500).json({ message: "There's an " + error }));
 };
